@@ -1,5 +1,6 @@
 # Understand Asynchronous Programming
 
+I wanted to take a moment to say thank you to [@nguyenanhhao998](https://github.com/nguyenanhhao998), [@chunguyenduc](https://github.com/chunguyenduc), [@hieuwu](https://github.com/hieuwu) and vot zo for the great coffee talks that inspired me to write this article. I'm grateful for your support in my learning journey
 
 ## Introduction
 Traditionally, your programs run sequentially, which means using a linear order and execution of operations where each operation must complete before the next operation can begin. It can also be called synchronous programming.
