@@ -21,15 +21,15 @@ HOST = '127.0.0.1'
 PORT = 12345
 
 
-def handle_client(socket):
+def handle_client(socket_conn):
     while True:
-        received_data = socket.recv(4096)
+        received_data = socket_conn.recv(4096)
         if not received_data:
             break
-        socket.sendall(received_data)
+        socket_conn.sendall(received_data)
 
     print('Disconnected from ----- ', socket.getpeername(), ' at ', datetime.now())
-    socket.close()
+    socket_conn.close()
 
 
 def run_server(host, port):
@@ -51,9 +51,9 @@ if __name__ == '__main__':
 What we do here in nutshell is:
 
 1. Create a new TCP/IP socket using the `socket.socket()` function.
-2. Bind the socket with a specific address and port using `sock.bind()`.
-3. Set the socket to a "listening" state using `sock.listen()`.
-4. Accept incoming connections using `sock.accept()`.
+2. Bind the socket with a specific address and port using `socket_conn.bind()`.
+3. Set the socket to a "listening" state using `socket_conn.listen()`.
+4. Accept incoming connections using `socket_conn.accept()`.
 5. Receive data from the client using `sock.recv()` and send the data back to the client using `sock.sendall()`.
 
 the code will create a basic TCP Echo server in my local machine. By design, this echo server will behave in a synchronous manner. When multiple clients attempt to connect to the server simultaneously, one client establishes a connection and occupies the server, while the remaining clients are compelled to wait until the active client disconnects.
@@ -169,8 +169,11 @@ def run_server(host, port):
         print('Connection from   ----- ', addr, ' at ', datetime.now())
         pool.submit(handle_client, client_socket)
 ```
+How is this different from the threading way? Well, you can see the thread pool executor is now set as 2, this mean there are only 2 client handled at the same time. we can try by running the thread pool server and 5 client trying to connect. The results will be:
+Using a thread pool is a practical and uncomplicated method. However, it is essential to tackle the problem of slow clients monopolizing the thread pool. This can be handled in several ways, including **terminating long-living connections**, **setting a minimum throughput rate for clients**, **enabling task prioritization**. 
 
-Using a thread pool is a practical and uncomplicated method. However, it is essential to tackle the problem of slow clients monopolizing the thread pool. This can be handled in several ways, including **terminating long-living connections**, **setting a minimum throughput rate for clients**, **enabling task prioritization**. In summary, achieving efficient concurrent server performance with OS threads is more intricate than it seems at first, urging us to explore alternative concurrency strategies.
+
+In summary, achieving efficient concurrent server performance with OS threads is more intricate than it seems at first, urging us to explore alternative concurrency strategies.
 
 
 
