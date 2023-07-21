@@ -170,6 +170,7 @@ def run_server(host, port):
         pool.submit(handle_client, client_socket)
 ```
 How is this different from the threading way? Well, you can see the thread pool executor is now set as 2, this mean there are only 2 client handled at the same time. we can try by running the thread pool server and 5 client trying to connect. The results will be:
+
 Using a thread pool is a practical and uncomplicated method. However, it is essential to tackle the problem of slow clients monopolizing the thread pool. This can be handled in several ways, including **terminating long-living connections**, **setting a minimum throughput rate for clients**, **enabling task prioritization**. 
 
 
