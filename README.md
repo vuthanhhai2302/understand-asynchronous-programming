@@ -176,7 +176,7 @@ Using a thread pool is a practical and uncomplicated method. However, it is esse
 
 In summary, achieving efficient concurrent server performance with OS threads is more intricate than it seems at first, urging us to explore alternative concurrency strategies.
 
-
+#### IO-Multiplexing
 
 
 
