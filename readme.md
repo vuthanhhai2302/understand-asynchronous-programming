@@ -3,198 +3,202 @@
 I wanted to take a moment to say thank you to [@nguyenanhhao998](https://github.com/nguyenanhhao998), [@chunguyenduc](https://github.com/chunguyenduc), [@hieuwu](https://github.com/hieuwu) and vot zo for the great coffee talks that inspired me to write this article. I'm grateful for your support in my learning journey
 
 ## Introduction
-Traditionally, your programs run sequentially, which means using a linear order and execution of operations where each operation must complete before the next operation can begin. It can also be called synchronous programming.
+Traditionally, your programs run sequentially, which means using a linear order and execution of operations where each operation must complete before the next operation can begin. It can also be called synchronous programming. You can find this type of programming everywhere, from simple projects to more complex systems, because it's easier to write and understand, intuitive to debug, and predictable to run. However, this style of programming can lead to long execution times and limit the scalability of your code, especially when dealing with long running tasks or heavy processing.
 
-You can find this type of programming everywhere, from simple projects to more complex systems, because it's easier to write and understand, intuitive to debug, and predictable to run. However, this style of programming can lead to long execution times and limit the scalability of your code, especially when dealing with long running tasks or heavy processing.
-
-Asynchronous execution, on the other hand, is a mode of code execution that allows multiple lines of code to execute at the same time. This means that if one line of code takes a long time to execute, other lines of code can continue to execute at the same time. Asynchronous code is more complex than synchronous code, but it can be much more efficient for certain types of programs. So, how can we do Asynchronous programming?
+Asynchronous execution, on the other hand, is a mode of code execution that allows multiple lines of code to execute at the same time. This means that if one line of code takes a long time to execute, other lines of code can continue to execute at the same time. Asynchronous code is more complex than synchronous code, but it can be much more efficient for certain types of problems, regarding either I/O bound or CPU bound. So, how can we apply asynchronous programming to speed up our application?
 
 ## Synchronous programming
-Before we start diving in Asynchronous programing, let take a look on how our computer do in a synchronous manner. this article will try to implement a TCP server in __python 3.11__ that manages a single client sequentially is a relatively simple task. The server actively monitors a specific port for incoming connections, and upon receiving a connection request from a client, engages in communication with that client until the connection is terminated. Afterwards, the server resumes its role of listening for new connection requests. This straight forward process can be achieved by employing fundamental socket programming techniques.
+Before we start diving in Asynchronous programing, let take a look on how our computer do in a synchronous manner. This section will cover on how IO bound and CPU bound slow down your synchronous application.
+
+### I/O bound
+In computer science, I/O bound refers to a condition in which the time it takes to complete a computation is determined principally by the period spent waiting for input/output operations to be completed. This circumstance arises when the rate at which data is requested is slower than the rate it is consumed or, in other words, more time is spent requesting data than processing it. 
+
+For example, when we are calling an API, we need to wait for the server to send us a response or when the application need to search for a file in your hard drive, ... All of this cause a delay in your code as the program will have to wait for the resource and continue to process.
+
+Let's take a look at the example bellow, where we are trying to call for 10 character apis from rickandmortyapi.com and let the response delay for 2 seconds to mimic the deplay of the server:
 
 ```python
-import socket
-from datetime import datetime
-
-
-HOST = '127.0.0.1'
-PORT = 12345
-
-
-def handle_client(socket_conn):
-    while True:
-        received_data = socket_conn.recv(4096)
-        if not received_data:
-            break
-        socket_conn.sendall(received_data)
-
-    print('Disconnected from ----- ', socket.getpeername(), ' at ', datetime.now())
-    socket_conn.close()
-
-
-def run_server(host, port):
-    socket_conn = socket.socket()
-    socket_conn.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    socket_conn.bind((host, port))
-    socket_conn.listen()
-    while True:
-        client_socket, addr = socket_conn.accept()
-        print('Connection from   ----- ', addr, ' at ', datetime.now())
-        handle_client(client_socket)
-
-
-
-if __name__ == '__main__':
-    run_server(HOST, PORT)
-```
-
-What we do here in nutshell is:
-
-1. Create a new TCP/IP socket using the `socket.socket()` function.
-2. Bind the socket with a specific address and port using `socket_conn.bind()`.
-3. Set the socket to a "listening" state using `socket_conn.listen()`.
-4. Accept incoming connections using `socket_conn.accept()`.
-5. Receive data from the client using `sock.recv()` and send the data back to the client using `sock.sendall()`.
-
-the code will create a basic TCP Echo server in my local machine. By design, this echo server will behave in a synchronous manner. When multiple clients attempt to connect to the server simultaneously, one client establishes a connection and occupies the server, while the remaining clients are compelled to wait until the active client disconnects.
-
-I have created a program to simulate when 3 client connect to this server at the same time:
-
-```python
-# Client connecting at the same time
-
-import socket
-import threading
+import requests
 import time
-from datetime import datetime
+import logging
+import sys
 
+date_strftime_format = "%Y-%m-%d %H:%M:%S"
+message_format = "%(asctime)s.%(msecs)05d - %(levelname)s - %(message)s"
 
-HOST = 'localhost'
-PORT = 12345
+logging.basicConfig(
+        level = logging.INFO,
+        format = message_format, datefmt = date_strftime_format,
+        handlers = [
+            logging.StreamHandler(sys.stdout)
+        ]
+    )
+logger = logging.getLogger('log output')
 
+DELAY_FACTOR = 2
 
-def client_socket(client_number):
-    messages = ["Hello", "World!"]
+# Get response from API using 
+def get_character_data(character_index: int):
+    logger.info(f'Ingesting character number {character_index}')
+    response = requests.get(f'https://rickandmortyapi.com/api/character/{character_index}')
+    
+    if response.status_code == 200:
+        logger.info(f"Ingested successfully character number {character_index}")
+    else:
+        logger.error(f"Ingestion failed character number {character_index}!")
 
-    print("Client trying to connect:  -------" + f" CLIENT {client_number}", ' at ', datetime.now())
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    client_socket.connect((HOST, PORT))
-    print("Client connect sucesfully: -------" + f" CLIENT {client_number}", ' at ', datetime.now())
+    time.sleep(DELAY_FACTOR)
+    return response
 
-    for message in messages:
-        time.sleep(1)
-        print("\t"* client_number + f"CLIENT {client_number} is sending message: {message}", ' at ', datetime.now())
-        client_socket.sendall(message.encode())
+# Synchronous programming
+def synchronous_api_call(number_of_apis: int):
+    for i in range(1, number_of_apis + 1):
+        response = get_character_data(i)
 
-        time.sleep(1)
-        data = client_socket.recv(1024)
-        print("\t"* client_number + f"CLIENT {client_number} received message: {data}", ' at ', datetime.now())
+if __name__ == "__main__":
+    start_time = time.time()
 
-    client_socket.close()
-    print("\t"* client_number + f"CLIENT {client_number} is disconnected", ' at ', datetime.now())
-
-num_clients = 3
-
-
-for client in range(0, num_clients):
-    threading.Thread(target=client_socket, args=(client,)).start()
+    synchronous_api_call(10)
+    total_execution_time = time.time() - start_time 
+    print(total_execution_time)
 ```
 
-When we run this client program, we can take a look at the behaviour of the application.
+And we can check out the log for understanding the execution of the synchonous code:
 
-![client-sequencial-thread](media/sequencial-client.drawio.png)
+<p align="center">
+  <img src="media/execution_synchronous_io_bound.png" alt="Execution log of Synchronous program"/>
+</p>
 
-<span style='color: #006EAF;'> Client trying to connect:</span> three client will trying to connect to the server at the same time
+We can describe this through a diagram:
 
-<span style='color: #6F0000;'> Client connect sucesfully:</span> the clients can reach to the server
+<p align="center">
+  <img src="media/synchronous_IO_bound.png" alt="Execution diagram of Synchronous program"/>
+</p>
 
-<span style='color: #3700CC;'> Client is sending message:</span> the 3 client will try sending message to the server
+we can see the idle time between every time the application sending the requests and receive the response from the API. this casause unnecessary wait time and this we usually call **I/O bound**.
 
-<span style='color: #a50040;'> How the server handling the client:</span> the server can only handle one client at the time, it have to wait until the current client to disconnect and then the new client can connect to the server. we can take a look at the server's log:
+### CPU bound
 
-![client-sequencial-thread](media/sequencial-server.png)
+## How asynchronous programming tackle these issues?
 
-The diagram bellow indicates how the TCP echo server is working:
-
-![client-sequencial-thread](media/action-diagram-sequencial.jpg)
-
-> **Conclusion**: This is inefficent and the other client have to wait until they can access. If there is a slow client, this could make the service unavailable to everyone.
-
-## How python do thing asynchronously?
-
-### Operating System's Threads
+### I/O Bound
+#### Operating System's Threads
 
 A **thread** represents **a sequential execution flow of tasks within a process**, which is also referred to as a thread of execution. Each operating system provides a mechanism for executing threads within a process and a process can contain multiple threads. So, how can we use thread to execute tasks concurrently?
 
-#### Multi-Thread Executions
-
-First we need to adjust the scripts to make the `handle_client()` function to run in multiple thread. Instead of calling the function in the main thread, we use threading library in python and change how we call the `handle_client()` into  `thread = threading.Thread(target=handle_client, args=[client_sock])` and then start the process by `thread.start()`.
+##### Multi-Threading Executions
+Reusing the code block above, we can add a minor change in the code to change the process into multi-threading execution
 
 ```python
-def run_server(host, port):
-    socket_conn = socket.socket()
-    socket_conn.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    socket_conn.bind((host, port))
-    socket_conn.listen()
+import threading
 
-    while True:
-        client_socket, addr = socket_conn.accept()
-        print('Connection from   ----- ', addr, ' at ', datetime.now())
-        thread = threading.Thread(target=handle_client, args=[client_socket])
+# OS threads
+def threading_api_call(number_of_apis: int):
+    # Create and start multiple threads
+    threads = []
+    for i in range(1, number_of_apis + 1):
+        thread = threading.Thread(target=get_character_data, args=(i,))
+        threads.append(thread)
         thread.start()
 
+    # Wait for all threads to finish
+    for thread in threads:
+        thread.join()
 ```
-You can get full code in the file tcp_server_threading_implementation.py
 
-When we can start to run the new TCP echo server and re run the client program and then this is the result:
+we can see the significant change in the execution times:
+<p align="center">
+  <img src="media/execution_multi_threading.png" alt="Execution log of OS thread"/>
+</p>
 
+the diagram bellow indicates how the code actually run with this type of concurrent programming:
 
-![threading-client](media/threading-client.drawio.png)
+<p align="center">
+  <img src="media/os_thread.png" alt="Execution diagram in OS thread"/>
+</p>
 
-On the server side, we can see that the clients dont have to wait any more:
+Right now we can see the usage of OS's thread, when we are processing and run into an IO operation, the thread will switch to another one until the IO operation occurs again. this process keep happen until we handle the whole program. the <span style='color: #9673A6;'>purple arrow </span> indicates the **context switching** in multi-threading execution, this is allow thanks to **Python Global Interpreter Lock (GIL)**.
 
-![concurrent-server](media/concurrent-server.png)
-So we can see all the clients are being handled simultaneously. This is how the threading client tackle the concurrency, the process can be visualized through this diagram:
+However, this approach have some problems. Thread is a kind of expensive resource interms of memory, an os have limited number of threads. So, the one-api-call-per-thread doesn't scale well and we will soon run out of thread. This can resulted in the server will not only work poorly under heavy workload, is there anyway we can improve this?
 
-![concurrent-server](media/action-diagram-os-thread.jpg)
-
-However, this approach have some problems. Thread is a kind of expensive resource interms of memory, an os have limited number of threads. So, the one-client-per-thread doesn't scale well and we will soon run out of thread. This can resulted in the server will not only work poorly under heavy workload, but also becomes an easy target for DoS attack. Is there anyway we can improve this?
-
-
-#### Thread Pool Executions
+##### Thread Pool Executions
 
 Thread pools offer a solution to the issue of uncontrolled thread creation. Instead of creating a new thread for each task, we employ a queue to which we submit tasks, and a group of threads, forming a thread pool, takes and processes these tasks from the queue. This approach allows us to set a predetermined maximum number of threads in the pool, preventing the server from spawning an excessive number of threads. Below is an example of how we can implement a thread pool version of the server using the Python standard concurrent.futures module:
 
 ```python
-pool = ThreadPoolExecutor(max_workers=2)
+import concurrent.futures
 
-def run_server(host, port):
-    socket_conn = socket.socket()
-    socket_conn.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    socket_conn.bind((host, port))
-    socket_conn.listen()
-    while True:
-        client_socket, addr = socket_conn.accept()
-        print('Connection from   ----- ', addr, ' at ', datetime.now())
-        pool.submit(handle_client, client_socket)
+# Thread-pool 
+def thread_pool_api_call(number_of_apis: int, number_of_threads: int):
+    with concurrent.futures.ThreadPoolExecutor(max_workers=number_of_threads) as executor:
+        # Use list comprehension to submit API requests to the thread pool
+        results = [executor.submit(get_character_data, i) for i in range(1, number_of_apis + 1)]
+
+        # Retrieve results from the submitted tasks
+        for future in concurrent.futures.as_completed(results):
+            result = future.result()
 ```
-How is this different from the threading way? Well, you can see the thread pool executor is now set as 2, this mean there are only 2 client handled at the same time. we can try by running the thread pool server and 3 client trying to connect. One client will have to wait out side the pool just like the sequencial server, when the 2 in the pool is disconnect, the last client will join the party:
 
-![concurrent-server](media/client-thread-pool.jpg)
+How is this different from the threading way? Well, you can see the thread pool executor is now set as 5, this mean there are only 5 api call happened at the same time:
 
-<span style='color: #2D7600;'> Client trying to connect:</span> three client will trying to connect to the server at the same time
+<p align="center">
+  <img src="media/execution_thread_pool.png" alt="Execution diagram in thread-pool"/>
+</p>
 
-<span style='color: #3700CC;'> Handle clients in the pool:</span> the fist 2 client will seize the pool until they disconnect.
+when a call api action is finished, the pool let another execution happen, but only 5 thread is open in the pool. This way, we can assure control over the os's resource.
 
-<span style='color: #6F0000;'> Handle clients out side the pool:</span> when the clients in the pool disconnect, the clients who wait out side will be able to jump in (similar to those who connect in the sequencial server).
+> **Conclusion**:  Using a thread pool is a practical and uncomplicated method. However, it is essential to tackle the problem of slow executions monopolizing the thread pool. This can be handled in several ways, including **terminating long-living connections**,  **enabling task prioritization**. Archieving efficient concurrent server performance with OS threads is more intricate than it seems at first, urging us to explore alternative concurrency strategies.
 
-> **Conclusion**:  Using a thread pool is a practical and uncomplicated method. However, it is essential to tackle the problem of slow clients monopolizing the thread pool. This can be handled in several ways, including **terminating long-living connections**, **setting a minimum throughput rate for clients**, **enabling task prioritization**. Archieving efficient concurrent server performance with OS threads is more intricate than it seems at first, urging us to explore alternative concurrency strategies.
+#### Asyncio
 
-#### IO-Multiplexing
+Asyncio is a paradigm allows non-blocking execution of your code, enable the program to handle concurrent operation efficiently. To see how Asyncio work in python, we can try running the block of code below:
 
+```python
+import asyncio
+import aiohttp
 
+# AsyncIO
+async def asyncio_get_character_data(character_index: int):
+    async with aiohttp.ClientSession() as session:
+        async with session.get(f'https://rickandmortyapi.com/api/character/{character_index}') as response:
 
+            if response.status == 200:
+                logger.info(f'Ingesting character number {character_index}')
+                data = await response.json()
+                await asyncio.sleep(DELAY_FACTOR)
 
+                logger.info(f"Ingested successfully character number {character_index}")
+                return data
+            else:
+                logger.error(f"Ingestion failed character number {character_index}!")
 
+async def main():
+    list_of_characters = range(1, 11)
 
+    tasks = [asyncio_get_character_data(index) for index in list_of_characters]
+
+    results = await asyncio.gather(*tasks)
+```
+When you check out the execution logs, you can see the similarity to multi-threading when you allow the unlimited generation of thread.
+<p align="center">
+  <img src="media/execution_asyncio.png" alt="Execution log of asyncio function"/>
+</p>
+
+but the this is how asyncIO code really run:
+<p align="center">
+  <img src="media/asyncio.png" alt="Execution diagram of asyncio function"/>
+</p>
+
+We can see there is only one thread is used, but how can asyncIO allow us to do this?
+
+<p align="center">
+  <img src="media/event_loop.png" alt="Event loop"/>
+</p>
+
+From the bottom up, asyncio start with 
+1. **Coroutines**: these are asynchronous functions that allow you to paused and resumed a function, defining the asynchronous logic and they are defined with the `async def` syntax. The keyword `await` is used inside these coroutines to pause the execution of the coroutine until the awaited function is complete. the usage of `async` and `await` allow you to write the concurrent code without using any threads or processes.
+2. **Tasks**: these tasks refer to a unit of work that is run on the event loops, it allow a way to coordinate the executions of corroutines.
+3. **Event Loops**: it primary function is to manage the concurrent execution of asynchronous code included in tasks and coroutine in a non blocking way.
+
+> **Notes**: we can schedule directly coroutine on the event loop but it would be a bit messy.
 
