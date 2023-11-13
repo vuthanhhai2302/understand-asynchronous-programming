@@ -1,16 +1,24 @@
-# Understand Asynchronous Programming
+# Apply asynchronous programming to speed up your Python code
 
 I wanted to take a moment to say thank you to [@nguyenanhhao998](https://github.com/nguyenanhhao998), [@chunguyenduc](https://github.com/chunguyenduc), [@hieuwu](https://github.com/hieuwu) and vot zo for the great coffee talks that inspired me to write this article. I'm grateful for your support in my learning journey
 
 ## Introduction
-Traditionally, your programs run sequentially, which means using a linear order and execution of operations where each operation must complete before the next operation can begin. It can also be called synchronous programming. You can find this type of programming everywhere, from simple projects to more complex systems, because it's easier to write and understand, intuitive to debug, and predictable to run. However, this style of programming can lead to long execution times and limit the scalability of your code, especially when dealing with long running tasks or heavy processing.
+Traditionally, your programs run sequentially, which means using a linear order and execution of operations where each operation must complete before the next operation can begin, it can also be called synchronous programming. You can find this type of programming everywhere, from simple projects to more complex systems, because it's easier to write and understand, intuitive to debug, and predictable to run. 
 
-Asynchronous execution, on the other hand, is a mode of code execution that allows multiple lines of code to execute at the same time. This means that if one line of code takes a long time to execute, other lines of code can continue to execute at the same time. Asynchronous code is more complex than synchronous code, but it can be much more efficient for certain types of problems, regarding either I/O bound or CPU bound. So, how can we apply asynchronous programming to speed up our application?
+However, this style of programming can lead to long execution times and limit the scalability of your code, especially when dealing with long running tasks that depend on an external source or heavy processing using your CPU. These problem are generally called **I/O bound** and **CPU bound**. So, how can we apply asynchronous programming to speed up our application?
 
-## Synchronous programming
-Before we start diving in Asynchronous programing, let take a look on how our computer do in a synchronous manner. This section will cover on how IO bound and CPU bound slow down your synchronous application.
+#### The key is concurrency and parallelism
 
-### I/O bound
+the 2 concepts concurrency and parallelism are both used to managing and executing mutiple tasks, but the way they execute is different. Let's take a look at the diagram bellow to see how the 2 paradigm different from each other and compare to synchronous way:
+<p align="center">
+  <img src="media/concurrency_and_parallelism.png" alt="concurrency vs parallelism"/>
+</p>
+
+**Concurrency** doesn't necessary mean that multiple tasks must run at the same time, they can run for some time, then paused then let other tasks run and maybe it can get to run in the future. **Parllelism** on the other hands, do tasks simultaneously. Each tasks will  have its own swimlane, allowing tasks to run at the same time with others.
+
+Moving on the the next part, we will break down how concurrency can handle both I/O bound and CPU bound then which paradigm to chose in each case.
+
+## I/O bound
 In computer science, I/O bound refers to a condition in which the time it takes to complete a computation is determined principally by the period spent waiting for input/output operations to be completed. This circumstance arises when the rate at which data is requested is slower than the rate it is consumed or, in other words, more time is spent requesting data than processing it. 
 
 For example, when we are calling an API, we need to wait for the server to send us a response or when the application need to search for a file in your hard drive, ... All of this cause a delay in your code as the program will have to wait for the resource and continue to process.
