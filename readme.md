@@ -85,11 +85,8 @@ We can describe this through a diagram:
 
 we can see the idle time between every time the application sending the requests and receive the response from the API. this casause unnecessary wait time and this we usually call **I/O bound**.
 
-### CPU bound
+### How to tackle I/O bound with concurrency?
 
-## How asynchronous programming tackle these issues?
-
-### I/O Bound
 #### Operating System's Threads
 
 A **thread** represents **a sequential execution flow of tasks within a process**, which is also referred to as a thread of execution. Each operating system provides a mechanism for executing threads within a process and a process can contain multiple threads. So, how can we use thread to execute tasks concurrently?
@@ -125,7 +122,7 @@ the diagram bellow indicates how the code actually run with this type of concurr
   <img src="media/os_thread.png" alt="Execution diagram in OS thread"/>
 </p>
 
-Right now we can see the usage of OS's thread, when we are processing and run into an IO operation, the thread will switch to another one until the IO operation occurs again. this process keep happen until we handle the whole program. the <span style='color: #9673A6;'>purple arrow </span> indicates the **context switching** in multi-threading execution, this is allow thanks to **Python Global Interpreter Lock (GIL)**.
+Right now we can see the usage of OS's thread, when we are processing and run into an IO operation, the thread will switch to another one until the IO operation occurs again. this process keep happen until we handle the whole program. the <span style='color: #9673A6;'>purple arrow </span> indicates the **context switching** in multi-threading execution.
 
 However, this approach have some problems. Thread is a kind of expensive resource interms of memory, an os have limited number of threads. So, the one-api-call-per-thread doesn't scale well and we will soon run out of thread. This can resulted in the server will not only work poorly under heavy workload, is there anyway we can improve this?
 
@@ -210,3 +207,5 @@ From the bottom up, asyncio start with
 
 > **Notes**: we can schedule directly coroutine on the event loop but it would be a bit messy.
 
+
+## CPU bound
