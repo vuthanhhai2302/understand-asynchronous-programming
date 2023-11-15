@@ -25,6 +25,7 @@ For example, when we are calling an API, we need to wait for the server to send 
 
 Let's take a look at the example bellow, where we are trying to call for 10 character apis from rickandmortyapi.com and let the response delay for 2 seconds to mimic the deplay of the server:
 
+
 ```python
 import requests
 import time
