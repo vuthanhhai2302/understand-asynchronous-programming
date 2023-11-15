@@ -5,6 +5,7 @@ I wanted to take a moment to say thank you to [@nguyenanhhao998](https://github.
 ## Introduction
 Traditionally, your programs run sequentially, which means using a linear order and execution of operations where each operation must complete before the next operation can begin, it can also be called synchronous programming. You can find this type of programming everywhere, from simple projects to more complex systems, because it's easier to write and understand, intuitive to debug, and predictable to run. 
 
+
 However, this style of programming can lead to long execution times and limit the scalability of your code, especially when dealing with long running tasks that depend on an external source or heavy processing using your CPU. These problem are generally called **I/O bound** and **CPU bound**. So, how can we apply asynchronous programming to speed up our application?
 
 #### The key is concurrency and parallelism
