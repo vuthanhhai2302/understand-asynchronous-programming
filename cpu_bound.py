@@ -5,17 +5,16 @@ import os
 import logging
 import sys
 
-date_strftime_format = "%Y-%m-%d %H:%M:%S"
-message_format = "%(asctime)s.%(msecs)05d - %(levelname)s - %(message)s"
-
 logging.basicConfig(
         level = logging.INFO,
-        format = message_format, datefmt = date_strftime_format,
+        format = "[%(asctime)s] - [%(levelname)s] - [Process %(process)d, Thread %(thread)d] - %(message)s", 
+        datefmt = "%Y-%m-%d %H:%M:%S",
         handlers = [
             logging.StreamHandler(sys.stdout),
             logging.FileHandler('log/multiprocessing_log.txt')
         ]
     )
+
 logger = logging.getLogger('log output')
 
 def is_prime(n):
@@ -35,8 +34,8 @@ def is_prime(n):
 def find_primes(start, end):
     primes = []
     for number in range(start, end + 1):
-        process_id = os.getpid()
-        logger.info(f'Processing number {number} at processor {process_id}')
+        
+        logger.info(f'Processing number {number}')
         if is_prime(number):
             primes.append(number)
     return primes
@@ -60,17 +59,6 @@ if __name__ == "__main__":
 
     start_time = time.time()
     find_primes(1, 10100000)
-    # multiprocessing_find_primes(prime_range, num_processes)
-    """
-    chunk_size = (prime_range[1] - prime_range[0] + 1) // num_processes
 
-    with multiprocessing.Pool(processes=num_processes) as pool:
-        results = pool.starmap(find_primes, [
-            (prime_range[0] + i * chunk_size, prime_range[0] + (i + 1) * chunk_size - 1, i, num_processes)
-            for i in range(num_processes)
-        ])
-    
-    primes = [prime for sublist in results for prime in sublist]
-    """    
     end_time = time.time()
     print(f"Execution time: {end_time - start_time} seconds")

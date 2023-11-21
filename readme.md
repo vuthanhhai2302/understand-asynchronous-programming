@@ -1,23 +1,27 @@
 # Apply asynchronous programming to speed up your Python code
 
-I wanted to take a moment to say thank you to [@nguyenanhhao998](https://github.com/nguyenanhhao998), [@chunguyenduc](https://github.com/chunguyenduc), [@hieuwu](https://github.com/hieuwu) and vot zo for the great coffee talks that inspired me to write this article. I'm grateful for your support in my learning journey
+I wanted to take a moment to say thank you to [@nguyenanhhao998](https://github.com/nguyenanhhao998), [@chunguyenduc](https://github.com/chunguyenduc), [@hieuwu](https://github.com/hieuwu) and vot zo for the great coffee talks that inspired me to write this article. I'm grateful for your support in my learning journey.
 
 ## Introduction
 Traditionally, your programs run sequentially, which means using a linear order and execution of operations where each operation must complete before the next operation can begin, it can also be called synchronous programming. You can find this type of programming everywhere, from simple projects to more complex systems, because it's easier to write and understand, intuitive to debug, and predictable to run. 
 
+However, this style of programming can lead to long execution times and limit the scalability of your code, especially when dealing with long running tasks that depend on an external source or heavy processing using your CPU. These operations are generally called **I/O bound** and **CPU bound**. 
 
-However, this style of programming can lead to long execution times and limit the scalability of your code, especially when dealing with long running tasks that depend on an external source or heavy processing using your CPU. These problem are generally called **I/O bound** and **CPU bound**. So, how can we apply asynchronous programming to speed up our application?
+### What is I/O Bound and CPU bound?
+When we mention an action as either CPU bound or I/O bound, we are referring to the limitation that prevent our programing running faster. If we can increase the performance the operations are bound on, the program can complete in less time. **I/O bound** are when we spend time waiting for a network (transmitting data through the internet,...) or an io divice(searching in our system's hard drive storage,...). **CPU bound** refer to the computation and processing code as looping through a dataset with ten thousand rows and arregating the element or applying the business to it then calculate for reports. 
 
-#### The key is concurrency and parallelism
+I/O bound and CPU bound operations live side by side with each other in real life. First, we make an API call from rickandmortyapi.com, once we have the response, we performce an loop through the list of response, get the data we need and then write the strings to our storage as an second IO bound operations. These issue occurs daily, yet how we can tackle these issues?
 
+### The key is concurrency and parralelism
 the 2 concepts concurrency and parallelism are both used to managing and executing mutiple tasks, but the way they execute is different. Let's take a look at the diagram bellow to see how the 2 paradigm different from each other and compare to synchronous way:
 <p align="center">
   <img src="media/concurrency_and_parallelism.png" alt="concurrency vs parallelism"/>
 </p>
 
-**Concurrency** doesn't necessary mean that multiple tasks must run at the same time, they can run for some time, then paused then let other tasks run and maybe it can get to run in the future. **Parllelism** on the other hands, do tasks simultaneously. Each tasks will  have its own swimlane, allowing tasks to run at the same time with others.
+**Concurrency** doesn't necessary mean that multiple tasks must run at the same time, they can run for some time, then paused then let other tasks run and maybe it can get to run in the future. **Parllelism** on the other hands, do tasks simultaneously. Each tasks will  have its own swimlane, allowing tasks to run at the same time with others. 
 
-Moving on the the next part, we will break down how concurrency can handle both I/O bound and CPU bound then which paradigm to chose in each case.
+### Process, thread, multithreading and multi processing
+
 
 ## I/O bound
 In computer science, I/O bound refers to a condition in which the time it takes to complete a computation is determined principally by the period spent waiting for input/output operations to be completed. This circumstance arises when the rate at which data is requested is slower than the rate it is consumed or, in other words, more time is spent requesting data than processing it. 
@@ -26,23 +30,22 @@ For example, when we are calling an API, we need to wait for the server to send 
 
 Let's take a look at the example bellow, where we are trying to call for 10 character apis from rickandmortyapi.com and let the response delay for 2 seconds to mimic the deplay of the server:
 
-
 ```python
 import requests
 import time
 import logging
 import sys
 
-date_strftime_format = "%Y-%m-%d %H:%M:%S"
-message_format = "%(asctime)s.%(msecs)05d - %(levelname)s - %(message)s"
-
 logging.basicConfig(
         level = logging.INFO,
-        format = message_format, datefmt = date_strftime_format,
+        format = "[%(asctime)s] - [%(levelname)s] - [Process %(process)d, Thread %(thread)d] - %(message)s", 
+        datefmt = "%Y-%m-%d %H:%M:%S",
         handlers = [
-            logging.StreamHandler(sys.stdout)
+            logging.StreamHandler(sys.stdout),
+            logging.FileHandler('log/multiprocessing_log.txt')
         ]
     )
+
 logger = logging.getLogger('log output')
 
 DELAY_FACTOR = 2

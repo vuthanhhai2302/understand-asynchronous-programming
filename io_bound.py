@@ -5,20 +5,22 @@ import asyncio
 import aiohttp
 import time
 
+import os
 import logging
 import sys
 
-date_strftime_format = "%Y-%m-%d %H:%M:%S"
-message_format = "%(asctime)s.%(msecs)05d - %(levelname)s - %(message)s"
 
 logging.basicConfig(
         level = logging.INFO,
-        format = message_format, datefmt = date_strftime_format,
+        format = "[%(asctime)s] - [%(levelname)s] - [Process %(process)d, Thread %(thread)d] - %(message)s", 
+        datefmt = "%Y-%m-%d %H:%M:%S",
         handlers = [
             logging.StreamHandler(sys.stdout)
         ]
     )
+
 logger = logging.getLogger('log output')
+
  
 DELAY_FACTOR = 2
 
@@ -67,8 +69,9 @@ def thread_pool_api_call(number_of_apis: int, number_of_threads: int):
 async def asyncio_get_character_data(character_index: int):
     async with aiohttp.ClientSession() as session:
         async with session.get(f'https://rickandmortyapi.com/api/character/{character_index}') as response:
+            
             if response.status == 200:
-                logger.info(f'Ingesting character number {character_index}')
+                logger.info(f'Ingesting character number {character_index} ')
                 data = await response.json()
                 await asyncio.sleep(DELAY_FACTOR)
 
@@ -89,9 +92,9 @@ async def main():
 if __name__ == "__main__":
     start_time = time.time()
 
-    # synchronous_api_call(10) # running the synchronous function
+    synchronous_api_call(10) # running the synchronous function
     # threading_api_call(10) # running the multi-threading function
-    # thread_pool_api_call(10, 5) # running the thread-pool function
-    asyncio.run(main()) # running the async io function
+    # thread_pool_api_call(10, 3) # running the thread-pool function
+    # asyncio.run(main()) # running the async io function
     total_execution_time = time.time() - start_time 
     print(f"Execution time: {total_execution_time} seconds")
